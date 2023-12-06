@@ -1,5 +1,6 @@
 # Handy Links
 
-[Uno getting started](https://platform.uno/docs/articles/getting-started-tutorial-1.html)
-
 [Markdown howto](https://www.markdownguide.org/basic-syntax/)
+
+[Swing GUI](https://docs.oracle.com/javase/tutorial/uiswing/)
+
