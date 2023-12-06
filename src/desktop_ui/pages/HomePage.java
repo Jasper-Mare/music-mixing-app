@@ -27,8 +27,6 @@ public class HomePage implements Page {
 
         mainPanel.add(sizeLabel);
 
-        mainPanel.setBackground(Color.lightGray);
-
         return mainPanel;
     }
 
