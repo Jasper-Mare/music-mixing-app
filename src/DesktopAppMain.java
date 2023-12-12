@@ -8,7 +8,8 @@ public class DesktopAppMain {
 
     public static void main(String[] args) {
 
-        PreferencesManager prefsManager = new PreferencesManager();
+        PreferencesManager.setupStatInstance();
+        PreferencesManager prefsManager = PreferencesManager.statInstance;
         prefsManager.saveToFile();
 
         AppWindow window = new AppWindow(new HomePage());
@@ -17,7 +18,7 @@ public class DesktopAppMain {
         // creating and showing this application's GUI.
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                window.createAndShowGUI(prefsManager.getAppPrefs());
+                window.createAndShowGUI();
             }
         });
 

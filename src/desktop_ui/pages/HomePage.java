@@ -1,6 +1,5 @@
 package src.desktop_ui.pages;
 
-import java.awt.Color;
 import java.awt.Dimension;
 
 import javax.swing.*;

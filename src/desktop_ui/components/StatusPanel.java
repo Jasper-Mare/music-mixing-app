@@ -5,6 +5,8 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import src.desktop_ui.pages.Page;
+import src.prefs.ColourScheme;
+import src.prefs.PreferencesManager;
 
 public class StatusPanel extends JPanel {
 
@@ -22,21 +24,23 @@ public class StatusPanel extends JPanel {
         super();
         this.currentPage = currentPage;
 
+        ColourScheme cs = PreferencesManager.statInstance.getColourScheme();
+
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
         windowTitle = new JLabel(currentPage.GetPageName());
         windowTitle.setSize(100, this.getHeight());
-        windowTitle.setBackground(Color.DARK_GRAY);
-        windowTitle.setForeground(Color.WHITE);
+        windowTitle.setBackground(cs.getStatusPanelWindowTitleBackgroundColour());
+        windowTitle.setForeground(cs.getStatusPanelWindowTitleForegroundColour());
         CompoundBorder titleBorder = BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 0, 2, Color.BLACK),
+                BorderFactory.createMatteBorder(0, 0, 0, 2, cs.getStatusPanelWindowTitleBorderColour()),
                 BorderFactory.createEmptyBorder(2, 2, 2, 2));
         windowTitle.setBorder(titleBorder);
         windowTitle.setOpaque(true);
 
         this.add(windowTitle);
-        this.setBackground(Color.LIGHT_GRAY);
-        this.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, Color.BLACK));
+        this.setBackground(cs.getStatusPanelBackgroundColour());
+        this.setBorder(BorderFactory.createMatteBorder(1, 0, 2, 0, cs.getStatusPanelBorderColour()));
 
     }
 

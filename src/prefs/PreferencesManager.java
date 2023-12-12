@@ -14,12 +14,23 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
 
 public class PreferencesManager {
+    public static PreferencesManager statInstance;
+
+    public static void setupStatInstance() {
+        statInstance = new PreferencesManager();
+    }
 
     private static final File appPrefsFile = new File("appPreferences.json");
     private AppPreferences appPrefs;
 
     public AppPreferences getAppPrefs() {
         return appPrefs;
+    }
+
+    private ColourScheme colourScheme;
+
+    public ColourScheme getColourScheme() {
+        return colourScheme;
     }
 
     public PreferencesManager() {
@@ -34,6 +45,8 @@ public class PreferencesManager {
             // reading resulted in an error, so create default prefs
             appPrefs = AppPreferences.defaultPrefs;
         }
+
+        colourScheme = new ColourScheme();
 
     }
 

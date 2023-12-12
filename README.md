@@ -11,6 +11,7 @@ A repo for an app that allows various song crossfade styles.
  - custom basic crossfades
 
 3. next
+ - load ui colour scheme from file
  - load custom fades from file
  - optionial routes:
    - load music from online ?
