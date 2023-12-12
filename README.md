@@ -2,16 +2,16 @@
 A repo for an app that allows various song crossfade styles.
 
 ## Minimum viable product:
-1.
- * load music from file
- * play music
- * apply one basic crossfade
+1. basic
+  * load music from file
+  * play music
+  * apply one basic crossfade
  
-2.
- * custom basic crossfades
+2. next
+  * custom basic crossfades
 
-3.
- * load custom fades from file
- * optionial routes:
-   * load music from online ?
-   *  cool music visualiser ?
+3. next
+  * load custom fades from file
+  * optionial routes:
+    * load music from online ?
+    * cool music visualiser ?
