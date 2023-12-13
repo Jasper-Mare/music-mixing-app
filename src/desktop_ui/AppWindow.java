@@ -2,8 +2,11 @@ package src.desktop_ui;
 
 import java.awt.Container;
 import java.awt.BorderLayout;
+import java.io.File;
+import java.io.IOException;
 
 import javax.swing.*;
+import javax.imageio.ImageIO;
 
 import src.desktop_ui.components.StatusPanel;
 import src.desktop_ui.pages.Page;
@@ -27,6 +30,11 @@ public class AppWindow {
         // Create and set up the window.
         JFrame frame = new JFrame("Music Mixer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        try {
+            frame.setIconImage(ImageIO.read(new File("res/icon256.png")));
+        } catch (IOException e) {
+        }
 
         Container contentPane = frame.getContentPane();
 
