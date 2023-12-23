@@ -4,4 +4,8 @@
 
 [Swing GUI](https://docs.oracle.com/javase/tutorial/uiswing/)
 
-https://stackoverflow.com/questions/2416935/how-to-play-wav-files-with-java
+[how to play wavs](https://stackoverflow.com/questions/2416935/how-to-play-wav-files-with-java)
+
+[java audio guide](https://www.codejava.net/coding/how-to-play-back-audio-in-java-with-examples)
+
+[java mp3 to wav converting](https://github.com/sipgate/mp3-wav/tree/master)

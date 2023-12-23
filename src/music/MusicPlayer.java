@@ -2,14 +2,20 @@ package src.music;
 
 import java.util.stream.Stream;
 
-public interface MusicPlayer<T> {
+public interface MusicPlayer {
 
-    public void play();
+    public void play() throws PlaybackError;
 
     public void pause();
 
-    public Stream<T> getSoundStream();
+    public Stream getSoundStream();
 
-    public Stream<T> setSoundStream();
+    public Stream setSoundStream();
+
+    public class PlaybackError extends Exception {
+        PlaybackError(String str) {
+            super(str);
+        }
+    }
 
 }
