@@ -1,24 +1,41 @@
 package src.music;
 
-import java.util.stream.Stream;
+import java.util.LinkedList;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 public class DesktopMusicPlayer implements MusicPlayer {
 
+    MusicStream stream;
+    boolean playing;
+
+    LinkedList<byte[]> playbackBuffer = new LinkedList<byte[]>();
+
     @Override
     public void play() throws PlaybackError {
 
-        byte[] buffer = new byte[2];
-        int frequency = 44100; // 44100 sample points per 1 second
+        float frequency = stream.getFrequency(); // 44100 sample points per 1 second
+        playing = true;
+
+        for (int i = 0; i < frequency * 5; i++) { // load up 5 seconds of sound
+            Byte[] next = stream.getNextSample();
+            byte[] newBytes = new byte[] { next[0], next[1] };
+            playbackBuffer.addLast(newBytes);
+        }
+
+        (new Thread(() -> {
+            bufferBuilder();
+        })).start();
 
         SourceDataLine sourceDataLine;
 
         try {
-            AudioFormat audioFormat = new AudioFormat((float) frequency, 16, 1, true, false);
+            AudioFormat audioFormat = new AudioFormat(frequency, 16, 1, true, false);
             sourceDataLine = AudioSystem.getSourceDataLine(audioFormat);
 
             sourceDataLine.open();
@@ -28,48 +45,40 @@ public class DesktopMusicPlayer implements MusicPlayer {
 
         sourceDataLine.start();
 
-        int durationMs = 5000;
-        int sinFrequency = 441; // number of times in 1sec sin function repeats
-        float numberOfSamplesToRepresentFullSin = (float) frequency / sinFrequency;
-
-        for (int i = 0; i < durationMs * (float) 44100 / 1000; i++) { // 1000 ms in 1 second
-            // divide with 2 since sin goes 0PI to 2PI
-            double angle = i / (numberOfSamplesToRepresentFullSin / 2.0) * Math.PI;
-
-            // 32767 - max value for sample to take (-32767 to 32767)
-            short soundSample = (short) (Math.sin(angle) * 32767);
-            buffer[0] = (byte) (soundSample & 0xFF); // write 8bits ________WWWWWWWW out of 16
-            buffer[1] = (byte) (soundSample >> 8); // write 8bits WWWWWWWW________ out of 16
-
-            sourceDataLine.write(buffer, 0, 2);
+        for (int i = 0; i < frequency * 5; i++) { // load up 5 seconds of sound
+            sourceDataLine.write(playbackBuffer.removeFirst(), 0, 2);
         }
 
-        System.out.println("done making data");
+        while (playing) {
+            sourceDataLine.write(playbackBuffer.removeFirst(), 0, 2);
+        }
 
         sourceDataLine.drain();
-
-        System.out.println("drained");
-
         sourceDataLine.stop();
 
     }
 
+    private void bufferBuilder() {
+        while (playing) {
+            Byte[] next = stream.getNextSample();
+            byte[] newBytes = new byte[] { next[0], next[1] };
+            playbackBuffer.addLast(newBytes);
+        }
+    }
+
     @Override
     public void pause() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'pause'");
+        playing = false;
     }
 
     @Override
-    public Stream getSoundStream() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSoundStream'");
+    public MusicStream getSoundStream() {
+        return stream;
     }
 
     @Override
-    public Stream setSoundStream() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setSoundStream'");
+    public void setSoundStream(MusicStream stream) {
+        this.stream = stream;
     }
 
 }

@@ -4,6 +4,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.Control;
 
 public class MakeSound {
     public static void main(String[] args) throws LineUnavailableException {
@@ -17,6 +18,12 @@ public class MakeSound {
 
         sourceDataLine.open();
         sourceDataLine.start();
+
+        Control[] c = sourceDataLine.getControls();
+
+        for (Control control : c) {
+            System.out.println(control.toString());
+        }
 
         int durationMs = 5000;
         int sinFrequency = 441; // number of times in 1sec sin function repeats
@@ -44,4 +51,5 @@ public class MakeSound {
 
         System.out.println("stopped");
     }
+
 }

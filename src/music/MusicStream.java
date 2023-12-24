@@ -1,9 +1,11 @@
 package src.music;
 
-import java.util.stream.Stream;
-
-public interface MusicStream extends Stream<byte[]> {
+public interface MusicStream {
 
     public float getFrequency();
+
+    public Byte[] getNextSample();
+
+    public Byte[] peekNextSample();
 
 }
