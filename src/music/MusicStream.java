@@ -4,8 +4,10 @@ public interface MusicStream {
 
     public float getFrequency();
 
-    public Byte[] getNextSample();
+    public short getNextSample();
 
-    public Byte[] peekNextSample();
+    public short peekNextSample();
+
+    public short[] getNextBlock(int requestedLength);
 
 }

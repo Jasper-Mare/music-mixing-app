@@ -9,6 +9,10 @@ public class MoreMaths {
         return (1 - p) * a + p * b;
     }
 
+    public static short lerp(short a, short b, double p) {
+        return (short) ((1 - p) * a + p * b);
+    }
+
     public static float clamp(float min, float val, float max) {
         return Math.min(max, Math.max(val, min));
     }

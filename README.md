@@ -20,4 +20,4 @@ A repo for an app that allows various song crossfade styles.
 
 Bugs:
  - clicks due to music buffer underflowing
- - music/FrequencyMatcher.java dosen't work rn
+ - music/FrequencyMatcher.java uses aproximation that can cause noise
