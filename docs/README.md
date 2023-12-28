@@ -11,3 +11,8 @@
 [java mp3 to wav converting](https://github.com/sipgate/mp3-wav/tree/master)
 
 [java GPU processing](https://stackoverflow.com/questions/22866901/using-java-with-nvidia-gpus-cuda)
+
+# logo
+
+bitmap and bitmap2 were combined to produce the logo
+

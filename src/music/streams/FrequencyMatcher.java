@@ -1,8 +1,11 @@
-package src.music;
+package src.music.streams;
 
+import java.util.ArrayList;
+
+import src.music.streams.MusicStream.OnStreamDoneListener;
 import src.util.MoreMaths;
 
-public class FrequencyMatcher implements MusicStream {
+public class FrequencyMatcher implements MusicStream, MusicStream.OnStreamDoneListener {
 
     MusicStream slowStream;
 
@@ -10,8 +13,12 @@ public class FrequencyMatcher implements MusicStream {
 
     short lastActualSample, nextActualSample;
 
+    ArrayList<MusicStream.OnStreamDoneListener> doneListeners = new ArrayList<>();
+
     public FrequencyMatcher(MusicStream slowStream, float targetFreq) {
         this.slowStream = slowStream;
+        slowStream.addOnStreamDoneListener(this);
+
         this.targetFreq = targetFreq;
 
         actualFreq = slowStream.getFrequency();
@@ -90,6 +97,19 @@ public class FrequencyMatcher implements MusicStream {
         }
 
         return block;
+    }
+
+    @Override
+    public void addOnStreamDoneListener(OnStreamDoneListener listener) {
+        doneListeners.add(listener);
+    }
+
+    @Override
+    public void OnStreamDone(MusicStream CompletedStream) {
+        // source stream done, so pass on notify
+        for (OnStreamDoneListener onStreamDoneListener : doneListeners) {
+            onStreamDoneListener.OnStreamDone(this);
+        }
     }
 
 }

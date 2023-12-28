@@ -1,5 +1,7 @@
 package src.music;
 
+import src.music.streams.MusicStream;
+
 public interface MusicPlayer {
 
     public void play() throws PlaybackError;
@@ -11,7 +13,7 @@ public interface MusicPlayer {
     public void setSoundStream(MusicStream stream);
 
     public class PlaybackError extends Exception {
-        PlaybackError(String str) {
+        public PlaybackError(String str) {
             super(str);
         }
     }

@@ -1,19 +1,26 @@
 package test;
 
+import java.util.ArrayList;
+
 import src.music.*;
-import src.music.MusicStreamMerger.MergeData;
+import src.music.streams.FrequencyMatcher;
+import src.music.streams.MusicEffect;
+import src.music.streams.MusicStream;
+import src.music.streams.MusicStreamMerger;
+import src.music.streams.MusicEffect.EffectData;
+import src.music.streams.MusicStreamMerger.MergeData;
 import src.music.MusicPlayer.PlaybackError;
+import src.music.desktopMusic.DesktopMusicPlayer;
 import src.util.Func;
 
 public class MusicTest {
 
     public static void main(String[] args) throws PlaybackError, InterruptedException {
 
-        testGeneratorB(1_000);
+        // testGeneratorC(5_000);
         Thread.sleep(3_000);
-        testGeneratorA(1_000);
-        Thread.sleep(3_000);
-        testMusicStreamMergerFade(5_000);
+        testMusicEffector(10_000);
+
     }
 
     static void testGeneratorA(long duration) throws InterruptedException {
@@ -42,6 +49,27 @@ public class MusicTest {
 
         DesktopMusicPlayer player = new DesktopMusicPlayer();
         MusicGeneratorB generator = new MusicGeneratorB();
+
+        player.setSoundStream(generator);
+
+        (new Thread(() -> {
+            try {
+                player.play();
+            } catch (PlaybackError e) {
+                e.printStackTrace();
+            }
+        })).start();
+
+        Thread.sleep(duration);
+
+        player.pause();
+    }
+
+    static void testGeneratorC(long duration) throws InterruptedException {
+        System.out.println("testing Generator C");
+
+        DesktopMusicPlayer player = new DesktopMusicPlayer();
+        MusicGeneratorC generator = new MusicGeneratorC();
 
         player.setSoundStream(generator);
 
@@ -139,6 +167,80 @@ public class MusicTest {
         player.pause();
     }
 
+    static void testMusicEffector(long duration) throws InterruptedException {
+        System.out.println("testing Effector");
+
+        DesktopMusicPlayer player = new DesktopMusicPlayer();
+        MusicGeneratorC generator = new MusicGeneratorC();
+
+        Func<EffectData, Short> mergeFade = new Func<EffectData, Short>() {
+
+            ArrayList<Short> sampleList = new ArrayList<Short>();
+            boolean startedSampling = false, doneSampling = false, playingBack = false;
+            int pointInSample;
+            double sampleDuration = Math.random() * 3, playbackStart, sampleStartTime = Math.random() * 3;
+
+            @Override
+            public Short Run(EffectData data) {
+                if (startedSampling && !doneSampling) {
+                    // currently sampling
+
+                    sampleList.add(data.sample());
+
+                    if (data.time() - sampleStartTime >= sampleDuration) {
+                        // sampling over
+                        doneSampling = true;
+                        playbackStart = data.time() + (Math.random() * 3);
+                    }
+
+                    return data.sample();
+                } else if (doneSampling && playingBack) {
+                    // playing sample
+
+                    short sample = sampleList.get(pointInSample);
+                    pointInSample++;
+
+                    if (pointInSample >= sampleList.size()) {
+                        // stop playing sample
+                        playingBack = false;
+                        sampleStartTime = data.time() + Math.random() * 3;
+                    }
+
+                    return sample;
+                } else {
+                    // regular playing
+
+                    if (doneSampling && data.time() >= playbackStart) {
+                        // start playing sample
+                        playingBack = true;
+                        pointInSample = 0;
+                    } else if (!doneSampling && sampleStartTime <= data.time()) {
+                        // start sampling
+                        startedSampling = true;
+                    }
+
+                    return data.sample();
+                }
+            }
+
+        };
+        MusicEffect merger = new MusicEffect(generator, mergeFade, duration);
+
+        player.setSoundStream(merger);
+
+        (new Thread(() -> {
+            try {
+                player.play();
+            } catch (PlaybackError e) {
+                e.printStackTrace();
+            }
+        })).start();
+
+        Thread.sleep(duration);
+
+        player.pause();
+    }
+
     static class MusicGeneratorA implements MusicStream {
         private float t = 0, period = 1 / getFrequency();
 
@@ -174,6 +276,11 @@ public class MusicTest {
             }
 
             return block;
+        }
+
+        @Override
+        public void addOnStreamDoneListener(OnStreamDoneListener listener) {
+            return; // never ends, so don't bother with this
         }
 
     }
@@ -212,6 +319,55 @@ public class MusicTest {
             }
 
             return block;
+        }
+
+        @Override
+        public void addOnStreamDoneListener(OnStreamDoneListener listener) {
+            return; // never ends, so don't bother with this
+        }
+
+    }
+
+    static class MusicGeneratorC implements MusicStream {
+        private float t = 0, period = 1 / getFrequency();
+
+        @Override
+        public float getFrequency() {
+            return 11000;
+        }
+
+        @Override
+        public short getNextSample() {
+            t += period;
+            return MusicUtils.floatToSample(generateTone(t));
+        }
+
+        @Override
+        public short peekNextSample() {
+            return MusicUtils.floatToSample(generateTone(t + period));
+        }
+
+        private float generateTone(float t) {
+            float thingA = (float) Math.pow(10, Math.cos(2 * Math.PI * t)) * 0.1f;
+            float noise = (float) (Math.random() * 2) - 1;
+
+            return thingA * noise;
+        }
+
+        @Override
+        public short[] getNextBlock(int requestedLength) {
+            short[] block = new short[requestedLength];
+
+            for (int i = 0; i < requestedLength; i++) {
+                block[i] = getNextSample();
+            }
+
+            return block;
+        }
+
+        @Override
+        public void addOnStreamDoneListener(OnStreamDoneListener listener) {
+            return; // never ends, so don't bother with this
         }
 
     }

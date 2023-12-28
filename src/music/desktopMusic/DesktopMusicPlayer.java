@@ -1,10 +1,14 @@
-package src.music;
+package src.music.desktopMusic;
 
 import java.util.LinkedList;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.SourceDataLine;
+
+import src.music.MusicPlayer;
+import src.music.MusicUtils;
+import src.music.streams.MusicStream;
 
 public class DesktopMusicPlayer implements MusicPlayer {
 
@@ -14,12 +18,13 @@ public class DesktopMusicPlayer implements MusicPlayer {
     LinkedList<short[]> blockBuffer = new LinkedList<short[]>();
     byte[] nextBlockToWrite;
     boolean blockConsumed;
-    private static final int blockSize = 8192; // load up 16KiB of sound (each sample is 2b)
+    private final int blockSize = 8192; // load up 16KiB of sound (each sample is 2b)
 
     @Override
     public void play() throws PlaybackError {
 
         try {
+            blockBuffer = new LinkedList<short[]>();
             nextBlockToWrite = new byte[2 * blockSize];
             blockConsumed = true; // so block gets refilled
             float frequency = stream.getFrequency();
@@ -55,7 +60,9 @@ public class DesktopMusicPlayer implements MusicPlayer {
 
     private void bufferBuilder() {
         while (playing) {
-            blockBuffer.addLast(stream.getNextBlock(blockSize));
+            if (blockBuffer.size() < 3) {
+                blockBuffer.addLast(stream.getNextBlock(blockSize)); // add blocks untill 3 are queued
+            }
 
             synchronized (nextBlockToWrite) {
                 if (blockConsumed && !blockBuffer.isEmpty()) {

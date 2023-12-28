@@ -1,8 +1,10 @@
-package src.music;
+package src.music.streams;
+
+import java.util.ArrayList;
 
 import src.util.Func;
 
-public class MusicStreamMerger implements MusicStream {
+public class MusicStreamMerger implements MusicStream, MusicStream.OnStreamDoneListener {
 
     private MusicStream trackA;
     private MusicStream trackB;
@@ -12,9 +14,16 @@ public class MusicStreamMerger implements MusicStream {
     private float freq;
     private double time, duration, period;
 
+    private boolean doneA, doneB;
+
+    ArrayList<MusicStream.OnStreamDoneListener> doneListeners = new ArrayList<>();
+
     public MusicStreamMerger(MusicStream trackA, MusicStream trackB,
             Func<MergeData, Short> sampleMergeFunc, double duration) {
         this.sampleMergeFunc = sampleMergeFunc;
+
+        doneA = false;
+        doneB = false;
 
         time = 0;
         this.duration = duration;
@@ -41,14 +50,15 @@ public class MusicStreamMerger implements MusicStream {
             this.trackB = new FrequencyMatcher(trackB, freq);
         }
 
+        this.trackA.addOnStreamDoneListener(this);
+        this.trackB.addOnStreamDoneListener(this);
+
     }
 
-    public double getDuration() {
-        return duration;
-    }
-
-    public double getTime() {
-        return time;
+    // infinite duration means not time dependant
+    public MusicStreamMerger(MusicStream trackA, MusicStream trackB,
+            Func<MergeData, Short> sampleMergeFunc) {
+        this(trackA, trackB, sampleMergeFunc, Double.POSITIVE_INFINITY);
     }
 
     @Override
@@ -62,6 +72,10 @@ public class MusicStreamMerger implements MusicStream {
 
         short sampleA = trackA.getNextSample();
         short sampleB = trackB.getNextSample();
+
+        if (time >= duration) {
+            notifyOnStreamDoneListeners();
+        }
 
         return sampleMergeFunc.Run(new MergeData(sampleA, sampleB, time, duration));
     }
@@ -85,6 +99,10 @@ public class MusicStreamMerger implements MusicStream {
             blockOut[i] = sampleMergeFunc.Run(new MergeData(blockA[i], blockB[i], time, duration));
         }
 
+        if (time >= duration) {
+            notifyOnStreamDoneListeners();
+        }
+
         return blockOut;
     }
 
@@ -96,4 +114,33 @@ public class MusicStreamMerger implements MusicStream {
      */
     public static record MergeData(short sampleA, short sampleB, double time, double duration) {
     }
+
+    @Override
+    public void addOnStreamDoneListener(OnStreamDoneListener listener) {
+        doneListeners.add(listener);
+    }
+
+    @Override
+    public void OnStreamDone(MusicStream completedStream) {
+        // an underlying stream is done,
+
+        if (completedStream == trackA) {
+            doneA = true;
+        } else if (completedStream == trackB) {
+            doneB = true;
+        }
+
+        // if both done and not time dependant then propogate
+        if (doneA && doneB && Double.isInfinite(duration)) {
+            notifyOnStreamDoneListeners();
+        }
+
+    }
+
+    private void notifyOnStreamDoneListeners() {
+        for (OnStreamDoneListener onStreamDoneListener : doneListeners) {
+            onStreamDoneListener.OnStreamDone(this);
+        }
+    }
+
 }
