@@ -1,244 +1,29 @@
 package test;
 
-import java.util.ArrayList;
-
 import src.music.*;
-import src.music.streams.FrequencyMatcher;
-import src.music.streams.MusicEffect;
-import src.music.streams.MusicStream;
-import src.music.streams.MusicStreamMerger;
-import src.music.streams.MusicEffect.EffectData;
-import src.music.streams.MusicStreamMerger.MergeData;
+import src.music.streams.*;
 import src.music.MusicPlayer.PlaybackError;
 import src.music.desktopMusic.DesktopMusicPlayer;
-import src.util.Func;
+import src.music.playlists.Playlist;
 
 public class MusicTest {
 
     public static void main(String[] args) throws PlaybackError, InterruptedException {
-
-        // testGeneratorC(5_000);
-        Thread.sleep(3_000);
-        testMusicEffector(10_000);
-
+        testMusicManager();
     }
 
-    static void testGeneratorA(long duration) throws InterruptedException {
-        System.out.println("testing Generator A");
+    static void testMusicManager() {
+        MusicPlayer outPlayer = new DesktopMusicPlayer();
+        MusicManager manager = new MusicManager(outPlayer);
 
-        DesktopMusicPlayer player = new DesktopMusicPlayer();
-        MusicGeneratorA generator = new MusicGeneratorA();
+        // TODO: setup playlist
 
-        player.setSoundStream(generator);
+        Playlist playlist = new Playlist(null);
 
-        (new Thread(() -> {
-            try {
-                player.play();
-            } catch (PlaybackError e) {
-                e.printStackTrace();
-            }
-        })).start();
+        manager.setPlaylist(playlist);
 
-        Thread.sleep(duration);
+        manager.start();
 
-        player.pause();
-    }
-
-    static void testGeneratorB(long duration) throws InterruptedException {
-        System.out.println("testing Generator B");
-
-        DesktopMusicPlayer player = new DesktopMusicPlayer();
-        MusicGeneratorB generator = new MusicGeneratorB();
-
-        player.setSoundStream(generator);
-
-        (new Thread(() -> {
-            try {
-                player.play();
-            } catch (PlaybackError e) {
-                e.printStackTrace();
-            }
-        })).start();
-
-        Thread.sleep(duration);
-
-        player.pause();
-    }
-
-    static void testGeneratorC(long duration) throws InterruptedException {
-        System.out.println("testing Generator C");
-
-        DesktopMusicPlayer player = new DesktopMusicPlayer();
-        MusicGeneratorC generator = new MusicGeneratorC();
-
-        player.setSoundStream(generator);
-
-        (new Thread(() -> {
-            try {
-                player.play();
-            } catch (PlaybackError e) {
-                e.printStackTrace();
-            }
-        })).start();
-
-        Thread.sleep(duration);
-
-        player.pause();
-    }
-
-    static void testFrequencyMatcher(long duration) throws InterruptedException {
-        System.out.println("testing FrequencyMatcher");
-
-        DesktopMusicPlayer player = new DesktopMusicPlayer();
-        MusicGeneratorA generator = new MusicGeneratorA();
-
-        FrequencyMatcher frequencyMatcher = new FrequencyMatcher(generator, 44100); // exactly 4 times higher polling
-                                                                                    // rate
-
-        player.setSoundStream(frequencyMatcher);
-
-        (new Thread(() -> {
-            try {
-                player.play();
-            } catch (PlaybackError e) {
-                e.printStackTrace();
-            }
-        })).start();
-
-        Thread.sleep(duration);
-
-        player.pause();
-    }
-
-    static void testMusicStreamMergerAvg(long duration) throws InterruptedException {
-        System.out.println("testing Merger");
-
-        DesktopMusicPlayer player = new DesktopMusicPlayer();
-        MusicGeneratorA generatorA = new MusicGeneratorA();
-        MusicGeneratorB generatorB = new MusicGeneratorB();
-
-        Func<MergeData, Short> mergeAvg = (MergeData data) -> {
-            return (short) ((data.sampleA() + data.sampleB()) / 2);
-        };
-        MusicStreamMerger merger = new MusicStreamMerger(generatorA, generatorB, mergeAvg, duration);
-
-        player.setSoundStream(merger);
-
-        (new Thread(() -> {
-            try {
-                player.play();
-            } catch (PlaybackError e) {
-                e.printStackTrace();
-            }
-        })).start();
-
-        Thread.sleep(duration);
-
-        player.pause();
-    }
-
-    static void testMusicStreamMergerFade(long duration) throws InterruptedException {
-        System.out.println("testing Merger");
-
-        DesktopMusicPlayer player = new DesktopMusicPlayer();
-        MusicGeneratorA generatorA = new MusicGeneratorA();
-        MusicGeneratorB generatorB = new MusicGeneratorB();
-
-        Func<MergeData, Short> mergeFade = (MergeData data) -> {
-            float lvlA = (float) (data.time() / data.duration()),
-                    lvlB = 1 - lvlA;
-
-            return (short) (data.sampleA() * lvlA + data.sampleB() * lvlB);
-        };
-        MusicStreamMerger merger = new MusicStreamMerger(generatorA, generatorB, mergeFade, duration);
-
-        player.setSoundStream(merger);
-
-        (new Thread(() -> {
-            try {
-                player.play();
-            } catch (PlaybackError e) {
-                e.printStackTrace();
-            }
-        })).start();
-
-        Thread.sleep(duration);
-
-        player.pause();
-    }
-
-    static void testMusicEffector(long duration) throws InterruptedException {
-        System.out.println("testing Effector");
-
-        DesktopMusicPlayer player = new DesktopMusicPlayer();
-        MusicGeneratorC generator = new MusicGeneratorC();
-
-        Func<EffectData, Short> mergeFade = new Func<EffectData, Short>() {
-
-            ArrayList<Short> sampleList = new ArrayList<Short>();
-            boolean startedSampling = false, doneSampling = false, playingBack = false;
-            int pointInSample;
-            double sampleDuration = Math.random() * 3, playbackStart, sampleStartTime = Math.random() * 3;
-
-            @Override
-            public Short Run(EffectData data) {
-                if (startedSampling && !doneSampling) {
-                    // currently sampling
-
-                    sampleList.add(data.sample());
-
-                    if (data.time() - sampleStartTime >= sampleDuration) {
-                        // sampling over
-                        doneSampling = true;
-                        playbackStart = data.time() + (Math.random() * 3);
-                    }
-
-                    return data.sample();
-                } else if (doneSampling && playingBack) {
-                    // playing sample
-
-                    short sample = sampleList.get(pointInSample);
-                    pointInSample++;
-
-                    if (pointInSample >= sampleList.size()) {
-                        // stop playing sample
-                        playingBack = false;
-                        sampleStartTime = data.time() + Math.random() * 3;
-                    }
-
-                    return sample;
-                } else {
-                    // regular playing
-
-                    if (doneSampling && data.time() >= playbackStart) {
-                        // start playing sample
-                        playingBack = true;
-                        pointInSample = 0;
-                    } else if (!doneSampling && sampleStartTime <= data.time()) {
-                        // start sampling
-                        startedSampling = true;
-                    }
-
-                    return data.sample();
-                }
-            }
-
-        };
-        MusicEffect merger = new MusicEffect(generator, mergeFade, duration);
-
-        player.setSoundStream(merger);
-
-        (new Thread(() -> {
-            try {
-                player.play();
-            } catch (PlaybackError e) {
-                e.printStackTrace();
-            }
-        })).start();
-
-        Thread.sleep(duration);
-
-        player.pause();
     }
 
     static class MusicGeneratorA implements MusicStream {

@@ -4,7 +4,15 @@ import java.util.ArrayList;
 
 public class Tree<T> {
 
-    Node rootNode;
+    public Node rootNode;
+
+    public Tree() {
+        this(null);
+    }
+
+    public Tree(T rootData) {
+        rootNode = new Node(rootData);
+    }
 
     public class Node {
         public T data;

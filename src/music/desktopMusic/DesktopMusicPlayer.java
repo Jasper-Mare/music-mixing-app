@@ -8,12 +8,13 @@ import javax.sound.sampled.SourceDataLine;
 
 import src.music.MusicPlayer;
 import src.music.MusicUtils;
+import src.music.MusicPlayer.PlaybackError;
 import src.music.streams.MusicStream;
 
 public class DesktopMusicPlayer implements MusicPlayer {
 
     MusicStream stream;
-    boolean playing;
+    boolean stopped, paused;
 
     LinkedList<short[]> blockBuffer = new LinkedList<short[]>();
     byte[] nextBlockToWrite;
@@ -21,8 +22,7 @@ public class DesktopMusicPlayer implements MusicPlayer {
     private final int blockSize = 8192; // load up 16KiB of sound (each sample is 2b)
 
     @Override
-    public void play() throws PlaybackError {
-
+    public void start() throws PlaybackError {
         try {
             blockBuffer = new LinkedList<short[]>();
             nextBlockToWrite = new byte[2 * blockSize];
@@ -33,7 +33,8 @@ public class DesktopMusicPlayer implements MusicPlayer {
                 bufferBuilder();
             })).start();
 
-            playing = true;
+            stopped = false;
+            paused = false;
 
             SourceDataLine sourceDataLine;
             AudioFormat audioFormat = new AudioFormat(frequency, 16, 1, true, false);
@@ -42,24 +43,40 @@ public class DesktopMusicPlayer implements MusicPlayer {
             sourceDataLine.open(audioFormat, blockSize * 2);
             sourceDataLine.start();
 
-            while (playing) {
-                synchronized (nextBlockToWrite) {
-                    if (!blockConsumed) {
-                        sourceDataLine.write(nextBlockToWrite, 0, blockSize * 2);
-                        blockConsumed = true;
-                    }
-                }
-            }
+            // run playback on seperate thread
+            (new Thread(() -> {
+                boolean lastPaused = false; // if it was paused on the last check
 
-            // sourceDataLine.drain();
-            sourceDataLine.stop();
+                while (!stopped) {
+                    if (lastPaused != paused) {
+                        if (paused) {
+                            sourceDataLine.stop();
+                        } else {
+                            sourceDataLine.start();
+                        }
+                    }
+
+                    synchronized (nextBlockToWrite) {
+                        if (!blockConsumed) {
+                            sourceDataLine.write(nextBlockToWrite, 0, blockSize * 2);
+                            blockConsumed = true;
+                        }
+                    }
+
+                    lastPaused = paused;
+                }
+
+                // sourceDataLine.drain();
+                sourceDataLine.stop();
+            })).start();
+
         } catch (Exception e) {
             throw new PlaybackError(e.getMessage());
         }
     }
 
     private void bufferBuilder() {
-        while (playing) {
+        while (!stopped) {
             if (blockBuffer.size() < 3) {
                 blockBuffer.addLast(stream.getNextBlock(blockSize)); // add blocks untill 3 are queued
             }
@@ -80,7 +97,20 @@ public class DesktopMusicPlayer implements MusicPlayer {
 
     @Override
     public void pause() {
-        playing = false;
+        paused = true;
+    }
+
+    @Override
+    public void resume() {
+        if (!stopped) {
+            paused = false;
+        }
+    }
+
+    @Override
+    public void stop() {
+        stopped = true;
+        paused = false;
     }
 
     @Override
@@ -89,8 +119,11 @@ public class DesktopMusicPlayer implements MusicPlayer {
     }
 
     @Override
-    public void setSoundStream(MusicStream stream) {
+    public void setSoundStream(MusicStream stream) throws PlaybackError {
+        stop();
         this.stream = stream;
+        start();
+
     }
 
 }
