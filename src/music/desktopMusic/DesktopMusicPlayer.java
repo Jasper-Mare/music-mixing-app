@@ -8,7 +8,6 @@ import javax.sound.sampled.SourceDataLine;
 
 import src.music.MusicPlayer;
 import src.music.MusicUtils;
-import src.music.MusicPlayer.PlaybackError;
 import src.music.streams.MusicStream;
 
 public class DesktopMusicPlayer implements MusicPlayer {
@@ -28,6 +27,10 @@ public class DesktopMusicPlayer implements MusicPlayer {
             nextBlockToWrite = new byte[2 * blockSize];
             blockConsumed = true; // so block gets refilled
             float frequency = stream.getFrequency();
+
+            if (frequency == 0) {
+                return;
+            }
 
             (new Thread(() -> {
                 bufferBuilder();
@@ -120,9 +123,13 @@ public class DesktopMusicPlayer implements MusicPlayer {
 
     @Override
     public void setSoundStream(MusicStream stream) throws PlaybackError {
-        stop();
-        this.stream = stream;
-        start();
+        if (!stopped) {
+            stop();
+            this.stream = stream;
+            start();
+        } else {
+            this.stream = stream;
+        }
 
     }
 

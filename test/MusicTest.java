@@ -1,5 +1,7 @@
 package test;
 
+import java.util.LinkedList;
+
 import src.music.*;
 import src.music.streams.*;
 import src.music.MusicPlayer.PlaybackError;
@@ -12,17 +14,27 @@ public class MusicTest {
         testMusicManager();
     }
 
-    static void testMusicManager() {
+    static void testMusicManager() throws PlaybackError {
         MusicPlayer outPlayer = new DesktopMusicPlayer();
-        MusicManager manager = new MusicManager(outPlayer);
+        // MusicManager manager = new MusicManager(outPlayer);
+        //
+        // LinkedList<MusicStream> streamSequence = new LinkedList<>();
+        //
+        // streamSequence.add(new LimitedDurationStream(new MusicGeneratorA(), 5_000));
+        // streamSequence.add(new LimitedDurationStream(new MusicGeneratorB(), 5_000));
+        // streamSequence.add(new LimitedDurationStream(new MusicGeneratorC(), 5_000));
+        //
+        // Playlist playlist = new Playlist(streamSequence);
+        //
+        // manager.setPlaylist(playlist);
+        //
+        // manager.start();
 
-        // TODO: setup playlist
+        // outPlayer.setSoundStream(new LimitedDurationStream(new MusicGeneratorB(),
+        // 5_000));
+        outPlayer.setSoundStream(new MusicGeneratorB());
 
-        Playlist playlist = new Playlist(null);
-
-        manager.setPlaylist(playlist);
-
-        manager.start();
+        outPlayer.start();
 
     }
 

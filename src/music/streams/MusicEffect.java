@@ -15,6 +15,10 @@ public class MusicEffect implements MusicStream, MusicStream.OnStreamDoneListene
 
     ArrayList<MusicStream.OnStreamDoneListener> doneListeners = new ArrayList<>();
 
+    public MusicEffect(MusicStream inputStream, Func<EffectData, Short> effectorFunc) {
+        this(inputStream, effectorFunc, Double.POSITIVE_INFINITY);
+    }
+
     public MusicEffect(MusicStream inputStream, Func<EffectData, Short> effectorFunc, double duration) {
         this.effectorFunc = effectorFunc;
         this.inputStream = inputStream;
@@ -45,7 +49,7 @@ public class MusicEffect implements MusicStream, MusicStream.OnStreamDoneListene
 
     @Override
     public short peekNextSample() {
-        short sample = inputStream.getNextSample();
+        short sample = inputStream.peekNextSample();
 
         return effectorFunc.Run(new EffectData(sample, time + period, duration));
     }
@@ -65,8 +69,8 @@ public class MusicEffect implements MusicStream, MusicStream.OnStreamDoneListene
 
     /**
      * @param sample   the current sample from track
-     * @param time     how far into the transition we are
-     * @param duration how long the transition lasts
+     * @param time     how far into the effect we are
+     * @param duration how long the effect lasts
      */
     public static record EffectData(short sample, double time, double duration) {
     }
