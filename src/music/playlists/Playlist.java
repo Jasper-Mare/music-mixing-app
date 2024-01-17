@@ -2,6 +2,7 @@ package src.music.playlists;
 
 import java.util.LinkedList;
 
+import src.music.streams.EmptyStream;
 import src.music.streams.MusicStream;
 
 public class Playlist {
@@ -14,7 +15,11 @@ public class Playlist {
     }
 
     public MusicStream getCurrent() {
-        return streams.getFirst();
+        if (streams.size() == 0) {
+            return new EmptyStream();
+        } else {
+            return streams.getFirst();
+        }
     }
 
     public void NextStream() {

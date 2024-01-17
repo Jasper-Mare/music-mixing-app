@@ -80,7 +80,11 @@ public class MusicManager implements MusicStream.OnStreamDoneListener {
             currentPlaylist.NextStream();
 
             try {
-                outputPlayer.setSoundStream(currentPlaylist.getCurrent());
+                MusicStream nextStream = currentPlaylist.getCurrent();
+                if (nextStream instanceof EmptyStream) {
+                    outputPlayer.stop();
+                }
+                outputPlayer.setSoundStream(nextStream);
             } catch (PlaybackError e) {
                 e.printStackTrace();
             }

@@ -1,4 +1,4 @@
-package src.desktop_ui;
+package src.desktop.ui;
 
 import java.awt.Container;
 import java.awt.BorderLayout;
@@ -8,8 +8,8 @@ import java.io.IOException;
 import javax.swing.*;
 import javax.imageio.ImageIO;
 
-import src.desktop_ui.components.StatusPanel;
-import src.desktop_ui.pages.Page;
+import src.desktop.ui.components.StatusPanel;
+import src.desktop.ui.pages.Page;
 import src.prefs.AppPreferences;
 import src.prefs.PreferencesManager;
 

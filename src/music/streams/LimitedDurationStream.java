@@ -2,13 +2,11 @@ package src.music.streams;
 
 import java.util.ArrayList;
 
-import src.music.streams.MusicEffect.EffectData;
-
 public class LimitedDurationStream implements MusicStream, MusicStream.OnStreamDoneListener {
     private MusicStream inputStream;
 
     private float freq;
-    private double time, duration, period;
+    private double time, duration, period; // times measured in seconds
 
     ArrayList<MusicStream.OnStreamDoneListener> doneListeners = new ArrayList<>();
 
@@ -48,7 +46,6 @@ public class LimitedDurationStream implements MusicStream, MusicStream.OnStreamD
 
     @Override
     public short[] getNextBlock(int requestedLength) {
-
         if (time + (period * requestedLength) > duration) {
             // the request stretches over the end of the time
             int numToEnd = (int) ((duration - time) / period);

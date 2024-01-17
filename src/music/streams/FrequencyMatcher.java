@@ -2,31 +2,34 @@ package src.music.streams;
 
 import java.util.ArrayList;
 
-import src.music.streams.MusicStream.OnStreamDoneListener;
 import src.util.MoreMaths;
 
 public class FrequencyMatcher implements MusicStream, MusicStream.OnStreamDoneListener {
 
-    MusicStream slowStream;
+    MusicStream actualStream;
 
-    double targetFreq, actualFreq, targetPeriod, actualPeriod, timeSinceActualSample;
+    double targetFreq, actualFreq, targetPeriod, actualPeriod, timeSinceLastSample;
 
     short lastActualSample, nextActualSample;
 
+    boolean downSample;
+
     ArrayList<MusicStream.OnStreamDoneListener> doneListeners = new ArrayList<>();
 
-    public FrequencyMatcher(MusicStream slowStream, float targetFreq) {
-        this.slowStream = slowStream;
-        slowStream.addOnStreamDoneListener(this);
+    public FrequencyMatcher(MusicStream actualStream, float targetFreq) {
+        this.actualStream = actualStream;
+        actualStream.addOnStreamDoneListener(this);
 
         this.targetFreq = targetFreq;
 
-        actualFreq = slowStream.getFrequency();
+        actualFreq = actualStream.getFrequency();
 
         targetPeriod = 1 / targetFreq;
         actualPeriod = 1 / actualFreq;
 
-        timeSinceActualSample = 0;
+        downSample = (targetPeriod >= actualPeriod);
+
+        timeSinceLastSample = 0;
     }
 
     @Override
@@ -36,31 +39,60 @@ public class FrequencyMatcher implements MusicStream, MusicStream.OnStreamDoneLi
 
     @Override
     public short getNextSample() {
-        timeSinceActualSample += targetPeriod;
+        if (downSample) {
+            // the actual stream is too fast
 
-        if (timeSinceActualSample >= actualPeriod) {
-            lastActualSample = slowStream.getNextSample();
-            nextActualSample = slowStream.peekNextSample();
+            // take until there's enough time for one sample
 
-            timeSinceActualSample -= actualPeriod;
+            timeSinceLastSample += targetPeriod;
+            while (timeSinceLastSample > 2 * actualPeriod) {
+                timeSinceLastSample -= actualPeriod;
+                actualStream.getNextSample(); // discard un-needed samples
+            }
+
+            return actualStream.getNextSample();
+        }
+        // else if up sample
+
+        timeSinceLastSample += targetPeriod;
+
+        if (timeSinceLastSample >= actualPeriod) {
+            lastActualSample = actualStream.getNextSample();
+            nextActualSample = actualStream.peekNextSample();
+
+            timeSinceLastSample -= actualPeriod;
         }
 
         short syntheticSample = MoreMaths.lerp(lastActualSample, nextActualSample,
-                (timeSinceActualSample / actualPeriod));
+                (timeSinceLastSample / actualPeriod));
 
         return syntheticSample;
     }
 
     @Override
     public short peekNextSample() {
+        if (downSample) {
+            // the actual stream is too fast
+
+            // take until there's enough time for one sample
+
+            // double timeToTake = timeSinceLastSample + targetPeriod;
+            // while (timeToTake > 2 * actualPeriod) {
+            // timeToTake -= actualPeriod;
+            // actualStream.?NextSample(); // how to peek ahead multiple samples?
+            // }
+
+            return actualStream.peekNextSample();
+        }
+        // else if up sample
 
         short syntheticSample;
-        if (timeSinceActualSample + targetPeriod > actualPeriod) { // if next step will leave the current sample range,
-                                                                   // approximate with closest bound
+        if (timeSinceLastSample + targetPeriod > actualPeriod) { // if next step will leave the current sample range,
+                                                                 // approximate with closest bound
             syntheticSample = nextActualSample;
         } else {
             syntheticSample = MoreMaths.lerp(lastActualSample, nextActualSample,
-                    (timeSinceActualSample / actualPeriod));
+                    (timeSinceLastSample / actualPeriod));
         }
 
         return syntheticSample;
@@ -69,17 +101,33 @@ public class FrequencyMatcher implements MusicStream, MusicStream.OnStreamDoneLi
     @Override
     public short[] getNextBlock(int numTargetSamples) {
         short[] block = new short[numTargetSamples];
+        double sampleRatio = (actualFreq / targetFreq);
+        int numActualSamples = (int) Math.floor(numTargetSamples * sampleRatio) + 1;
 
-        int numActualSamples = (int) Math.floor(numTargetSamples * (actualFreq / targetFreq)) + 1;
+        if (downSample) {
+            // the actual stream is too fast
+
+            int foundTargetSamples = 0;
+            short[] actualBlock = actualStream.getNextBlock(numActualSamples);
+
+            while (foundTargetSamples < numTargetSamples) {
+                block[foundTargetSamples] = actualBlock[(int) (foundTargetSamples * sampleRatio)];
+                foundTargetSamples++;
+            }
+
+            return block;
+        }
+        // else if up sample
+
         int currentActualSample = 0;
 
-        short[] actualBlock = slowStream.getNextBlock(numActualSamples);
-        short peekedSample = slowStream.peekNextSample();
+        short[] actualBlock = actualStream.getNextBlock(numActualSamples);
+        short peekedSample = actualStream.peekNextSample();
 
         for (int i = 0; i < numTargetSamples; i++) {
-            timeSinceActualSample += targetPeriod;
+            timeSinceLastSample += targetPeriod;
 
-            if (timeSinceActualSample >= actualPeriod) {
+            if (timeSinceLastSample >= actualPeriod) {
                 lastActualSample = actualBlock[currentActualSample];
 
                 if (currentActualSample < numActualSamples - 1) {
@@ -89,11 +137,11 @@ public class FrequencyMatcher implements MusicStream, MusicStream.OnStreamDoneLi
                 }
 
                 currentActualSample++;
-                timeSinceActualSample -= actualPeriod;
+                timeSinceLastSample -= actualPeriod;
             }
 
             block[i] = MoreMaths.lerp(lastActualSample, nextActualSample,
-                    (timeSinceActualSample / actualPeriod));
+                    (timeSinceLastSample / actualPeriod));
         }
 
         return block;

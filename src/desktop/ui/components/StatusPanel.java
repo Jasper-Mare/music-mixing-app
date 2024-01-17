@@ -1,10 +1,10 @@
-package src.desktop_ui.components;
+package src.desktop.ui.components;
 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
-import src.desktop_ui.pages.Page;
+import src.desktop.ui.pages.Page;
 import src.prefs.ColourScheme;
 import src.prefs.PreferencesManager;
 

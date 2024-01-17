@@ -1,7 +1,7 @@
-package src;
+package src.desktop;
 
-import src.desktop_ui.AppWindow;
-import src.desktop_ui.pages.*;
+import src.desktop.ui.AppWindow;
+import src.desktop.ui.pages.*;
 import src.prefs.PreferencesManager;
 
 public class DesktopAppMain {

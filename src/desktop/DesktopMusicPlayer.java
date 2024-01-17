@@ -1,4 +1,4 @@
-package src.music.desktopMusic;
+package src.desktop;
 
 import java.util.LinkedList;
 
@@ -8,11 +8,12 @@ import javax.sound.sampled.SourceDataLine;
 
 import src.music.MusicPlayer;
 import src.music.MusicUtils;
+import src.music.streams.FrequencyMatcher;
 import src.music.streams.MusicStream;
 
 public class DesktopMusicPlayer implements MusicPlayer {
 
-    MusicStream stream;
+    MusicStream inputStream, adjustedStream;
     boolean stopped, paused;
 
     LinkedList<short[]> blockBuffer = new LinkedList<short[]>();
@@ -26,7 +27,7 @@ public class DesktopMusicPlayer implements MusicPlayer {
             blockBuffer = new LinkedList<short[]>();
             nextBlockToWrite = new byte[2 * blockSize];
             blockConsumed = true; // so block gets refilled
-            float frequency = stream.getFrequency();
+            float frequency = adjustedStream.getFrequency();
 
             if (frequency == 0) {
                 return;
@@ -81,7 +82,7 @@ public class DesktopMusicPlayer implements MusicPlayer {
     private void bufferBuilder() {
         while (!stopped) {
             if (blockBuffer.size() < 3) {
-                blockBuffer.addLast(stream.getNextBlock(blockSize)); // add blocks untill 3 are queued
+                blockBuffer.addLast(adjustedStream.getNextBlock(blockSize)); // add blocks untill 3 are queued
             }
 
             synchronized (nextBlockToWrite) {
@@ -118,19 +119,14 @@ public class DesktopMusicPlayer implements MusicPlayer {
 
     @Override
     public MusicStream getSoundStream() {
-        return stream;
+        return inputStream;
     }
 
     @Override
     public void setSoundStream(MusicStream stream) throws PlaybackError {
-        if (!stopped) {
-            stop();
-            this.stream = stream;
-            start();
-        } else {
-            this.stream = stream;
-        }
-
+        this.inputStream = stream;
+        adjustedStream = new FrequencyMatcher(stream, 44100);
+        // use a frequency matcher to ensure a consistant frequency is provided
     }
 
 }

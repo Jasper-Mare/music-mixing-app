@@ -1,4 +1,4 @@
-package src.desktop_ui.pages;
+package src.desktop.ui.pages;
 
 import javax.swing.JPanel;
 

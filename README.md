@@ -16,7 +16,3 @@ A repo for an app that allows various song crossfade styles.
  - optionial routes:
    - load music from online ?
    - cool music visualiser ?
-
-
-Bugs:
- - music/FrequencyMatcher.java uses aproximation that can cause minor noise
