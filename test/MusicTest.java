@@ -1,26 +1,35 @@
 package test;
 
+import java.io.IOException;
 import java.util.LinkedList;
+
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 import src.desktop.DesktopMusicPlayer;
 import src.music.*;
 import src.music.streams.*;
 import src.music.MusicPlayer.PlaybackError;
+import src.music.files.Mp3Reader;
 import src.music.playlists.Playlist;
 
 public class MusicTest {
 
-    public static void main(String[] args) throws PlaybackError, InterruptedException {
+    public static void main(String[] args)
+            throws PlaybackError, InterruptedException, IOException, UnsupportedAudioFileException {
         testMusicManager();
     }
 
-    static void testMusicManager() throws PlaybackError {
+    static void testMusicManager() throws PlaybackError, IOException, UnsupportedAudioFileException {
         MusicPlayer outPlayer = new DesktopMusicPlayer();
         MusicManager manager = new MusicManager(outPlayer);
 
         LinkedList<MusicStream> streamSequence = new LinkedList<>();
 
+        Mp3Reader reader = new Mp3Reader();
+        reader.openFile("/home/jasper/Music/David Byrne/Rei Momo/1 - Independence Day.mp3");
+
         streamSequence.add(new LimitedDurationStream(new ToneGenerator(), 5));
+        streamSequence.add(reader.getMusicStream());
         streamSequence.add(new LimitedDurationStream(new NoiseGenerator(), 5));
         streamSequence.add(new LimitedDurationStream(new FluctuatingNoiseGenerator(), 5));
 
