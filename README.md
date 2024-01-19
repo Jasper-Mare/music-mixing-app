@@ -16,3 +16,7 @@ A repo for an app that allows various song crossfade styles.
  - optionial routes:
    - load music from online ?
    - cool music visualiser ?
+
+
+credit:
+javazoom library from https://github.com/umjammer/jlayer/tree/master
