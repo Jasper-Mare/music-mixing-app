@@ -9,7 +9,7 @@ import src.desktop.DesktopMusicPlayer;
 import src.music.*;
 import src.music.streams.*;
 import src.music.MusicPlayer.PlaybackError;
-import src.music.files.Mp3Reader;
+import src.music.files.*;
 import src.music.playlists.Playlist;
 
 public class MusicTest {
@@ -25,11 +25,14 @@ public class MusicTest {
 
         LinkedList<MusicStream> streamSequence = new LinkedList<>();
 
-        Mp3Reader reader = new Mp3Reader();
+        // MusicFile reader = new WavReader();
+        MusicFile reader = new Mp3Reader();
         reader.openFile("/home/jasper/Music/David Byrne/Rei Momo/1 - Independence Day.mp3");
 
-        streamSequence.add(new LimitedDurationStream(new ToneGenerator(), 5));
-        streamSequence.add(reader.getMusicStream());
+        // reader.openFile("/home/jasper/Music/sfx/radar4.wav");
+
+        streamSequence.add(new LimitedDurationStream(new ToneGenerator(), 2));
+        streamSequence.add(new LimitedDurationStream(reader.getMusicStream(), 5));
         streamSequence.add(new LimitedDurationStream(new NoiseGenerator(), 5));
         streamSequence.add(new LimitedDurationStream(new FluctuatingNoiseGenerator(), 5));
 
