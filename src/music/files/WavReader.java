@@ -1,6 +1,7 @@
 package src.music.files;
 
 import java.io.*;
+import java.nio.*;
 import java.util.ArrayList;
 
 import javax.sound.sampled.AudioInputStream;
@@ -9,6 +10,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import src.music.MusicUtils;
 import src.music.streams.MusicStream;
+import src.util.Func;
 
 public class WavReader implements MusicFile {
 
@@ -45,7 +47,8 @@ public class WavReader implements MusicFile {
 
             short nextSample;
             float freq = inStream.getFormat().getSampleRate();
-            long totalFramesRead = 0;
+            int channels = inStream.getFormat().getChannels();
+            boolean isBigEndian = inStream.getFormat().isBigEndian();
 
             ArrayList<MusicStream.OnStreamDoneListener> doneListeners = new ArrayList<>();
 
@@ -74,47 +77,66 @@ public class WavReader implements MusicFile {
                 int numBytes = (requestedLength + 1) * bytesPerFrame;
                 byte[] audioBytes = new byte[numBytes];
                 try {
-                    int numBytesRead = 0;
-                    int numFramesRead = 0;
 
                     // Try to read numBytes bytes from the file.
-                    fileDone = ((numBytesRead = inStream.read(audioBytes)) == -1);
+                    fileDone = (inStream.read(audioBytes) == -1);
 
-                    // Calculate the number of frames actually read.
-                    numFramesRead = numBytesRead / bytesPerFrame;
-                    totalFramesRead += numFramesRead;
+                    ByteBuffer buffer = ByteBuffer.wrap(audioBytes);
+
+                    if (isBigEndian) {
+                        buffer = buffer.order(ByteOrder.BIG_ENDIAN);
+                    } else {
+                        buffer = buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    }
+
+                    Func<ByteBuffer, Float> converter = getConverter();
+
+                    short[] processedFrames = new short[requestedLength];
+                    for (int frameNum = 0; frameNum < requestedLength; frameNum++) {
+                        processedFrames[frameNum] = MusicUtils
+                                .floatToSample(converter.Run(buffer));
+                    }
+
+                    nextSample = MusicUtils.floatToSample(converter.Run(buffer));
+
+                    if (fileDone) {
+                        for (OnStreamDoneListener listener : doneListeners) {
+                            listener.OnStreamDone(underlyingStream);
+                        }
+                    }
+
+                    // System.out.println(blocksRead + " done: " + fileDone);
+
+                    return processedFrames;
+
                 } catch (IOException ex) {
+                    ex.printStackTrace();
                     return new short[requestedLength];
                 }
-
-                float maxVal = Math.scalb(1, (bytesPerFrame * 8) - 1) - 1;
-                short[] processedFrames = new short[requestedLength];
-                for (int frameNum = 0; frameNum < requestedLength; frameNum++) {
-                    processedFrames[frameNum] = MusicUtils.floatToSample(processFrame(audioBytes, frameNum, maxVal));
-                }
-
-                nextSample = MusicUtils.floatToSample(processFrame(audioBytes, requestedLength, maxVal));
-
-                if (fileDone) {
-                    for (OnStreamDoneListener listener : doneListeners) {
-                        listener.OnStreamDone(underlyingStream);
-                    }
-                }
-
-                System.out.println(totalFramesRead / requestedLength);
-
-                return processedFrames;
             }
 
-            float processFrame(byte[] audioBytes, int frameNum, float maxVal) {
-                float val = 0; // TODO: a problem will probably come from here
-                for (int byteNum = 0; byteNum < bytesPerFrame; byteNum++) {
-                    val += byteNum * 8 * audioBytes[(frameNum * bytesPerFrame) + byteNum];
+            public src.util.Func<ByteBuffer, Float> getConverter() {
+                switch (bytesPerFrame) {
+                    case 2:
+                        return (buffer) -> {
+                            return (float) buffer.getShort() / Short.MAX_VALUE;
+                        };
+
+                    case 4:
+                        return (buffer) -> {
+                            return (float) buffer.getInt() / Integer.MAX_VALUE;
+                        };
+
+                    case 8:
+                        return (buffer) -> {
+                            return (float) buffer.getLong() / Long.MAX_VALUE;
+                        };
+
+                    default:
+                        return (buffer) -> {
+                            return (float) buffer.get() / Byte.MAX_VALUE;
+                        };
                 }
-
-                val /= maxVal;
-
-                return val;
             }
 
             @Override
@@ -127,4 +149,7 @@ public class WavReader implements MusicFile {
     }
 
 }
-// https://stackoverflow.com/a/6400178
+// https://stackoverflow.com/a/6400178 - Java - reading, manipulating and
+// writing WAV files
+// https:// stackoverflow.com/a/7619111 - Convert a byte array to integer in
+// Java and vice versa

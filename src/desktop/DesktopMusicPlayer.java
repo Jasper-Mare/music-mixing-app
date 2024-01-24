@@ -81,6 +81,8 @@ public class DesktopMusicPlayer implements MusicPlayer {
 
     private void bufferBuilder() {
         while (!stopped) {
+            // System.out.println("buffer size: " + blockBuffer.size());
+
             if (blockBuffer.size() < 3) {
                 blockBuffer.addLast(adjustedStream.getNextBlock(blockSize)); // add blocks untill 3 are queued
             }
@@ -89,7 +91,8 @@ public class DesktopMusicPlayer implements MusicPlayer {
                 if (blockConsumed && !blockBuffer.isEmpty()) {
                     short[] shortBlock = blockBuffer.removeFirst();
                     for (int i = 0; i < blockSize; i++) {
-                        byte[] tmp = MusicUtils.sampleToBuffer(shortBlock[i]);
+                        short sample = shortBlock[i];
+                        byte[] tmp = MusicUtils.sampleToBuffer(sample);
                         nextBlockToWrite[i * 2] = tmp[0];
                         nextBlockToWrite[i * 2 + 1] = tmp[1];
                     }

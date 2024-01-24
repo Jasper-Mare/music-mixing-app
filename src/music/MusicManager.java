@@ -76,6 +76,9 @@ public class MusicManager implements MusicStream.OnStreamDoneListener {
 
     @Override
     public void OnStreamDone(MusicStream completedStream) {
+
+        System.out.println(completedStream.getClass().getCanonicalName() + " is done");
+
         if (completedStream == currentPlaylist.getCurrent()) {
             currentPlaylist.NextStream();
 

@@ -27,14 +27,16 @@ public class MusicTest {
 
         // MusicFile reader = new WavReader();
         MusicFile reader = new Mp3Reader();
-        reader.openFile("/home/jasper/Music/David Byrne/Rei Momo/1 - Independence Day.mp3");
+        reader.openFile("/home/jasper/Music/Pet Shop Boys/Bilingual/07 - A Red Letter Day.mp3");
 
         // reader.openFile("/home/jasper/Music/sfx/radar4.wav");
 
         streamSequence.add(new LimitedDurationStream(new ToneGenerator(), 2));
-        streamSequence.add(new LimitedDurationStream(reader.getMusicStream(), 5));
-        streamSequence.add(new LimitedDurationStream(new NoiseGenerator(), 5));
-        streamSequence.add(new LimitedDurationStream(new FluctuatingNoiseGenerator(), 5));
+        // streamSequence.add(new LimitedDurationStream(reader.getMusicStream(), 5));
+        streamSequence.add(reader.getMusicStream());
+        // streamSequence.add(new LimitedDurationStream(new NoiseGenerator(), 5));
+        // streamSequence.add(new LimitedDurationStream(new FluctuatingNoiseGenerator(),
+        // 5));
 
         Playlist playlist = new Playlist(streamSequence);
 
