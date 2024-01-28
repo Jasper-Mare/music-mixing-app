@@ -44,6 +44,10 @@ public class MusicEffect implements MusicStream, MusicStream.OnStreamDoneListene
 
         short sample = inputStream.getNextSample();
 
+        if (time > duration) {
+            notifyDone();
+        }
+
         return effectorFunc.Run(new EffectData(sample, time, duration));
     }
 
@@ -64,7 +68,28 @@ public class MusicEffect implements MusicStream, MusicStream.OnStreamDoneListene
             blockOut[i] = effectorFunc.Run(new EffectData(blockIn[i], time, duration));
         }
 
+        if (time > duration) {
+            notifyDone();
+        }
+
         return blockOut;
+    }
+
+    @Override
+    public void addOnStreamDoneListener(OnStreamDoneListener listener) {
+        doneListeners.add(listener);
+    }
+
+    private void notifyDone() {
+        for (OnStreamDoneListener onStreamDoneListener : doneListeners) {
+            onStreamDoneListener.OnStreamDone(this);
+        }
+    }
+
+    @Override
+    public void OnStreamDone(MusicStream CompletedStream) {
+        // underlying stream is done, so propogate the info
+        notifyDone();
     }
 
     /**
@@ -73,19 +98,6 @@ public class MusicEffect implements MusicStream, MusicStream.OnStreamDoneListene
      * @param duration how long the effect lasts
      */
     public static record EffectData(short sample, double time, double duration) {
-    }
-
-    @Override
-    public void addOnStreamDoneListener(OnStreamDoneListener listener) {
-        doneListeners.add(listener);
-    }
-
-    @Override
-    public void OnStreamDone(MusicStream CompletedStream) {
-        // underlying stream is done, so propogate the info
-        for (OnStreamDoneListener onStreamDoneListener : doneListeners) {
-            onStreamDoneListener.OnStreamDone(this);
-        }
     }
 
 }

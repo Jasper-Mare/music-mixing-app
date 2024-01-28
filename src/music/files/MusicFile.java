@@ -8,4 +8,6 @@ public interface MusicFile {
     public MusicStream getMusicStream();
 
     public void openFile(String fileName) throws IOException;
+
+    public double getDuration();
 }

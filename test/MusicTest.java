@@ -8,6 +8,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import src.desktop.DesktopMusicPlayer;
 import src.music.*;
 import src.music.streams.*;
+import src.util.Func;
 import src.music.MusicPlayer.PlaybackError;
 import src.music.files.*;
 import src.music.playlists.Playlist;
@@ -26,14 +27,22 @@ public class MusicTest {
         LinkedList<MusicStream> streamSequence = new LinkedList<>();
 
         // MusicFile reader = new WavReader();
-        MusicFile reader = new Mp3Reader();
-        reader.openFile("/home/jasper/Music/Pet Shop Boys/Bilingual/07 - A Red Letter Day.mp3");
+        // MusicFile reader = new Mp3Reader();
+        // reader.openFile("/home/jasper/Music/Pet Shop Boys/Bilingual/07 - A Red Letter
+        // Day.mp3");
+        MusicFile reader = new OggReader();
+        reader.openFile("/home/jasper/Music/Green Day/21st Century Breakdown/06 - Christian’s Inferno.ogg");
+
+        Func<MusicEffect.EffectData, Short> fadeOut = (MusicEffect.EffectData data) -> {
+            return (short) (data.sample() * (1 - (data.time() / data.duration())));
+        };
 
         // reader.openFile("/home/jasper/Music/sfx/radar4.wav");
 
         streamSequence.add(new LimitedDurationStream(new ToneGenerator(), 2));
-        // streamSequence.add(new LimitedDurationStream(reader.getMusicStream(), 5));
-        streamSequence.add(reader.getMusicStream());
+        streamSequence.add(new LimitedDurationStream(reader.getMusicStream(), 60));
+        streamSequence.add(new MusicEffect(reader.getMusicStream(), fadeOut, 10));
+        // streamSequence.add(reader.getMusicStream());
         // streamSequence.add(new LimitedDurationStream(new NoiseGenerator(), 5));
         // streamSequence.add(new LimitedDurationStream(new FluctuatingNoiseGenerator(),
         // 5));

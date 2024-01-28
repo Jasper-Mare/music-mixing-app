@@ -15,6 +15,7 @@ import src.util.Func;
 public class WavReader implements MusicFile {
 
     MusicStream underlyingStream;
+    double duration;
 
     @Override
     public MusicStream getMusicStream() {
@@ -39,7 +40,9 @@ public class WavReader implements MusicFile {
             } else {
                 bytesPerFrame = frameSize;
             }
+            duration = inStream.getFrameLength() / inStream.getFormat().getFrameRate();
         } catch (UnsupportedAudioFileException e) {
+            duration = 0;
             throw new IOException(e.getMessage(), e.getCause());
         }
 
@@ -48,6 +51,7 @@ public class WavReader implements MusicFile {
             short nextSample;
             float freq = inStream.getFormat().getSampleRate();
             int channels = inStream.getFormat().getChannels();
+
             boolean isBigEndian = inStream.getFormat().isBigEndian();
 
             ArrayList<MusicStream.OnStreamDoneListener> doneListeners = new ArrayList<>();
@@ -146,6 +150,11 @@ public class WavReader implements MusicFile {
 
         };
 
+    }
+
+    @Override
+    public double getDuration() {
+        return duration;
     }
 
 }
