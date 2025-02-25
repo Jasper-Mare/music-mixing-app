@@ -27,11 +27,8 @@ public class MusicTest {
         LinkedList<MusicStream> streamSequence = new LinkedList<>();
 
         // MusicFile reader = new WavReader();
-        // MusicFile reader = new Mp3Reader();
-        // reader.openFile("/home/jasper/Music/Pet Shop Boys/Bilingual/07 - A Red Letter
-        // Day.mp3");
-        MusicFile reader = new OggReader();
-        reader.openFile("/home/jasper/Music/Green Day/21st Century Breakdown/06 - Christian’s Inferno.ogg");
+        MusicFile reader = new Mp3Reader();
+        reader.openFile("/home/jasper/Music/Pet Shop Boys/Bilingual/07 - A Red Letter Day.mp3");
 
         Func<MusicEffect.EffectData, Short> fadeOut = (MusicEffect.EffectData data) -> {
             return (short) (data.sample() * (1 - (data.time() / data.duration())));

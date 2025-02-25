@@ -4,7 +4,7 @@ A repo for an app that allows various song crossfade styles.
 ## Minimum viable product:
 1. basic
  - load music from file
-   - wav, mp3, ogg
+   - wav, mp3
  - play music
  - apply one basic crossfade
  
